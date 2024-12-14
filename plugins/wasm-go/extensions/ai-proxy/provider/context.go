@@ -88,6 +88,7 @@ func (c *contextCache) GetContent(callback func(string, error), log wrapper.Log)
 	}, c.timeout)
 }
 
+// 根据传入的配置生成模型对话上下文 Cache
 func createContextCache(providerConfig *ProviderConfig) *contextCache {
 	contextConfig := providerConfig.context
 	if contextConfig == nil {
@@ -95,9 +96,9 @@ func createContextCache(providerConfig *ProviderConfig) *contextCache {
 	}
 	fileUrlObj, _ := url.Parse(contextConfig.fileUrl)
 	cluster := plainCluster{
-		serviceName: contextConfig.serviceName,
-		servicePort: contextConfig.servicePort,
-		hostName:    fileUrlObj.Host,
+		serviceName: contextConfig.serviceName, // 上游服务名称
+		servicePort: contextConfig.servicePort, // 上游服务端口
+		hostName:    fileUrlObj.Host,           // 用于获取对话上下文的文件的URL
 	}
 	return &contextCache{
 		client:  wrapper.NewClusterClient(cluster),

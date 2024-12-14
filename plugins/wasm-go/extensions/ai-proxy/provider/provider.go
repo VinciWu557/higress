@@ -72,6 +72,7 @@ const (
 	defaultTimeout = 2 * 60 * 1000 // ms
 )
 
+// 大模型供应商初始化接口
 type providerInitializer interface {
 	ValidateConfig(ProviderConfig) error
 	CreateProvider(ProviderConfig) (Provider, error)
@@ -494,6 +495,7 @@ func (c *ProviderConfig) handleRequestBody(
 
 	// use openai protocol
 	var err error
+	// 修改请求体与请求头
 	if handler, ok := provider.(TransformRequestBodyHandler); ok {
 		body, err = handler.TransformRequestBody(ctx, apiName, body, log)
 	} else if handler, ok := provider.(TransformRequestBodyHeadersHandler); ok {
@@ -523,9 +525,13 @@ func (c *ProviderConfig) handleRequestBody(
 }
 
 func (c *ProviderConfig) handleRequestHeaders(provider Provider, ctx wrapper.HttpContext, apiName ApiName, log wrapper.Log) {
+	// 检查传入的 provider 是否实现了 TransformRequestHeadersHandler 方法
 	if handler, ok := provider.(TransformRequestHeadersHandler); ok {
+		// 获取原有的 Headers
 		originalHeaders := util.GetOriginalHttpHeaders()
+		// 重写请求头
 		handler.TransformRequestHeaders(ctx, apiName, originalHeaders, log)
+		// 替换原有的 Headers
 		util.ReplaceOriginalHttpHeaders(originalHeaders)
 	}
 }
