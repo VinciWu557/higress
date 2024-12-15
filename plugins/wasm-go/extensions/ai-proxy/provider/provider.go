@@ -46,6 +46,7 @@ const (
 	providerTypeCohere     = "cohere"
 	providerTypeDoubao     = "doubao"
 	providerTypeCoze       = "coze"
+	providerTypeTogetherAI = "togetherai"
 
 	protocolOpenAI   = "openai"
 	protocolOriginal = "original"
@@ -106,6 +107,7 @@ var (
 		providerTypeCohere:     &cohereProviderInitializer{},
 		providerTypeDoubao:     &doubaoProviderInitializer{},
 		providerTypeCoze:       &cozeProviderInitializer{},
+		providerTypeTogetherAI: &togetherAIProviderInitializer{},
 	}
 )
 
