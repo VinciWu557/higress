@@ -67,7 +67,7 @@ EOF
 
 ## Create kind cluster.
 if [[ -z "${KIND_NODE_TAG}" ]]; then
-  tools/bin/kind create cluster --name "${CLUSTER_NAME}" --config=tools/hack/cluster.conf
+  kind create cluster --name "${CLUSTER_NAME}" --config=tools/hack/cluster.conf
 else
-  tools/bin/kind create cluster --image "kindest/node:${KIND_NODE_TAG}" --name "${CLUSTER_NAME}" --config=tools/hack/cluster.conf
+  kind create cluster --image "kindest/node:${KIND_NODE_TAG}" --name "${CLUSTER_NAME}" --config=tools/hack/cluster.conf
 fi

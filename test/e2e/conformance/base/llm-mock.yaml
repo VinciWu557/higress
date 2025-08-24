@@ -29,7 +29,8 @@ metadata:
 spec:
   containers:
     - name: llm-mock
-      image: higress-registry.cn-hangzhou.cr.aliyuncs.com/higress/llm-mock-server:latest
+      image: llm-mock:local
+      imagePullPolicy: Never
       ports:
         - containerPort: 3000
 ---

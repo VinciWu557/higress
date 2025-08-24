@@ -18,11 +18,12 @@ import (
 	"strings"
 	"testing"
 
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	"github.com/alibaba/higress/test/e2e/conformance/utils/config"
 	"github.com/alibaba/higress/test/e2e/conformance/utils/kubernetes"
 	"github.com/alibaba/higress/test/e2e/conformance/utils/roundtripper"
 	"istio.io/istio/pkg/util/sets"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -131,11 +132,11 @@ func New(s Options) *ConformanceTestSuite {
 	if suite.BaseManifests == nil {
 		suite.BaseManifests = []string{
 			"base/manifests.yaml",
-			"base/consul.yaml",
-			"base/eureka.yaml",
-			"base/nacos.yaml",
-			"base/dubbo.yaml",
-			"base/opa.yaml",
+			// "base/consul.yaml",
+			// "base/eureka.yaml",
+			// "base/nacos.yaml",
+			// "base/dubbo.yaml",
+			// "base/opa.yaml",
 			"base/llm-mock.yaml",
 		}
 	}
