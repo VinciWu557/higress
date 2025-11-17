@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package semantic_router;
+
+option go_package = "github.com/alibaba/higress/plugins/golang-filter/semantic-router/proto";
+
+// 分类请求消息
+message ClassificationRequest {
+  string text = 1;                // 待分类的文本内容
+  string request_id = 2;          // 请求唯一标识符
+  bool cache_enabled = 3;         // 是否启用缓存
+  map<string, string> metadata = 4; // 扩展元数据
+  int32 timeout_ms = 5;           // 超时时间（毫秒）
+}
+
+// 分类响应消息
+message ClassificationResponse {
+  string category = 1;                 // 预测的类别
+  double confidence = 2;               // 置信度
+  map<string, double> scores = 3;      // 所有类别的得分
+  double latency_ms = 4;               // 推理延迟（毫秒）
+  string method = 5;                   // 推理方法 ("model", "cache", "fallback")
+  string model_version = 6;            // 模型版本
+  int64 timestamp = 7;                 // 响应时间戳
+  string cache_key = 8;                // 缓存键
+}
+
+// 批量分类请求
+message BatchClassificationRequest {
+  repeated ClassificationRequest requests = 1;
+}
+
+// 批量分类响应
+message BatchClassificationResponse {
+  repeated ClassificationResponse responses = 1;
+}
+
+// 健康检查请求
+message HealthCheckRequest {
+  string check_type = 1; // 检查类型 ("basic", "detailed")
+}
+
+// 健康检查响应
+message HealthCheckResponse {
+  string status = 1;                    // 服务状态
+  map<string, string> stats = 2;        // 统计信息
+  int64 timestamp = 3;                  // 检查时间戳
+  string details = 4;                   // 详细信息
+}
+
+// 语义分类服务定义
+service SemanticClassifierService {
+  rpc Classify(ClassificationRequest) returns (ClassificationResponse);
+  rpc BatchClassify(BatchClassificationRequest) returns (BatchClassificationResponse);
+  rpc StreamClassify(stream ClassificationRequest) returns (stream ClassificationResponse);
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+}

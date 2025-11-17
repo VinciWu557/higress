@@ -1,0 +1,64 @@
+# 语义路由插件测试配置
+# 用于阶段一集成测试，验证基础路由功能
+
+classifier_service:
+  # 分类服务地址
+  service_host: "semantic-classifier-service.default.svc.cluster.local"
+  service_port: 50051
+
+  # 超时配置
+  timeout_ms: 3000
+
+  # TLS 配置
+  enable_tls: false
+
+  # 连接池配置
+  connection_pool:
+    max_connections: 16
+    max_idle_time_ms: 300000
+
+  # 重试配置
+  retry:
+    max_retries: 3
+    initial_interval_ms: 100
+    max_interval_ms: 5000
+    backoff_multiplier: 2.0
+
+# 路由策略配置
+routing:
+  # 模型映射：类别 -> 模型名称
+  model_mapping:
+    math: "qwen-math-7b"
+    code: "qwen-code-7b"
+    medical: "qwen-medical-7b"
+    finance: "qwen-finance-7b"
+    general: "qwen-turbo"
+
+  # 默认模型（置信度不足时使用）
+  default_model: "qwen-turbo"
+
+  # 置信度阈值
+  confidence_threshold: 0.8
+
+# 缓存配置
+cache:
+  enabled: true
+  ttl_seconds: 3600
+  max_size: 10000
+
+# 数据收集配置（用于数据飞轮）
+data_collection:
+  enabled: false
+  sampling_rate: 0.1
+  storage_endpoint: "http://data-collector:8080/collect"
+  batch_size: 100
+  flush_interval: 60
+
+# 监控配置
+monitoring:
+  enabled: false
+  metrics_endpoint: "/metrics"
+  health_check_interval: 30
+
+# 日志级别
+log_level: "INFO"

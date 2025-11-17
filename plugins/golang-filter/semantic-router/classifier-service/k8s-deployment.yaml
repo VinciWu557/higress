@@ -1,0 +1,221 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: semantic-classifier
+  namespace: default
+  labels:
+    app: semantic-classifier
+    version: v1.0.0
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: semantic-classifier
+  template:
+    metadata:
+      labels:
+        app: semantic-classifier
+        version: v1.0.0
+    spec:
+      containers:
+      - name: classifier
+        image: your-registry.com/semantic-classifier:v1.0.0
+        ports:
+        - containerPort: 50051
+          name: grpc
+          protocol: TCP
+        - containerPort: 8080
+          name: metrics
+          protocol: TCP
+        env:
+        - name: REDIS_HOST
+          value: "redis-service"
+        - name: REDIS_PORT
+          value: "6379"
+        - name: REDIS_DB
+          value: "0"
+        - name: LOG_LEVEL
+          value: "INFO"
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1000m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+        livenessProbe:
+          exec:
+            command:
+            - python3
+            - -c
+            - |
+              import grpc
+              import sys
+              sys.path.append('/app/src')
+              import classifier_pb2_grpc, classifier_pb2
+              channel = grpc.insecure_channel('localhost:50051')
+              stub = classifier_pb2_grpc.SemanticClassifierServiceStub(channel)
+              request = classifier_pb2.HealthCheckRequest(check_type='basic')
+              response = stub.HealthCheck(request)
+              exit(0 if response.status == 'healthy' else 1)
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - python3
+            - -c
+            - |
+              import grpc
+              import sys
+              sys.path.append('/app/src')
+              import classifier_pb2_grpc, classifier_pb2
+              channel = grpc.insecure_channel('localhost:50051')
+              stub = classifier_pb2_grpc.SemanticClassifierServiceStub(channel)
+              request = classifier_pb2.HealthCheckRequest(check_type='detailed')
+              response = stub.HealthCheck(request)
+              exit(0 if response.status in ['healthy', 'degraded'] else 1)
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        volumeMounts:
+        - name: model-cache
+          mountPath: /app/models
+        - name: logs
+          mountPath: /app/logs
+      volumes:
+      - name: model-cache
+        emptyDir:
+          sizeLimit: 10Gi
+      - name: logs
+        emptyDir:
+          sizeLimit: 1Gi
+      nodeSelector:
+        kubernetes.io/arch: amd64
+      tolerations:
+      - key: "ai-workload"
+        operator: "Equal"
+        value: "true"
+        effect: "NoSchedule"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: semantic-classifier-service
+  namespace: default
+  labels:
+    app: semantic-classifier
+spec:
+  selector:
+    app: semantic-classifier
+  ports:
+  - port: 50051
+    targetPort: 50051
+    name: grpc
+    protocol: TCP
+  - port: 8080
+    targetPort: 8080
+    name: metrics
+    protocol: TCP
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: semantic-classifier-metrics
+  namespace: default
+  labels:
+    app: semantic-classifier
+spec:
+  selector:
+    app: semantic-classifier
+  ports:
+  - port: 8080
+    targetPort: 8080
+    name: metrics
+    protocol: TCP
+  type: ClusterIP
+
+---
+# Redis缓存服务
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:7-alpine
+        ports:
+        - containerPort: 6379
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "200m"
+        volumeMounts:
+        - name: redis-data
+          mountPath: /data
+      volumes:
+      - name: redis-data
+        emptyDir:
+          sizeLimit: 1Gi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+  namespace: default
+spec:
+  selector:
+    app: redis
+  ports:
+  - port: 6379
+    targetPort: 6379
+  type: ClusterIP
+
+---
+# HorizontalPodAutoscaler
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: semantic-classifier-hpa
+  namespace: default
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: semantic-classifier
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80

@@ -1,0 +1,4 @@
+.serena
+.venv
+*.bin
+__pycache__
